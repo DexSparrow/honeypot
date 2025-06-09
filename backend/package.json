@@ -1,0 +1,33 @@
+{
+  "name": "honeypot",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "geoip-lite": "^1.4.10",
+    "he": "^1.2.0",
+    "mongodb": "^6.16.0",
+    "mongoose": "^8.15.1",
+    "mysql2": "^3.14.1",
+    "pcap": "^3.1.0",
+    "tail": "^2.2.6"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.10"
+  },
+  "description": ""
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Authentification</title>
+</head>
+<body>
+  <h2>Inscription</h2>
+  <form id="signupForm">
+    <input type="email" name="email" placeholder="Email" required><br>
+    <input type="password" name="password" placeholder="Mot de passe" required><br>
+    <button type="submit">S'inscrire</button>
+  </form>
+
+  <h2>Connexion</h2>
+  <form id="loginForm">
+    <input type="email" name="email" placeholder="Email" required><br>
+    <input type="password" name="password" placeholder="Mot de passe" required><br>
+    <button type="submit">Se connecter</button>
+  </form>
+
+  <h2>Réinitialiser le mot de passe</h2>
+  <form id="resetForm">
+    <input type="email" name="email" placeholder="Email" required><br>
+    <input type="password" name="password" placeholder="Nouveau mot de passe" required><br>
+    <button type="submit">Réinitialiser</button>
+  </form>
+
+  <div id="response"></div>
+
+  <script>
+    const showResponse = (message) => {
+      document.getElementById('response').innerText = message;
+    };
+
+    const handleSubmit = (formId, endpoint) => {
+      console.log('Form Id = ', formId);
+      const form = document.getElementById(formId);
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Optionally add honeypot field here if you use one
+        // data.honeypot = '';
+
+        try {
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          const result = await res.json();
+          showResponse(result.message || result.error);
+        } catch (err) {
+          showResponse('Erreur de communication avec le serveur.');
+        }
+      });
+    };
+
+    // Connect forms to backend
+    handleSubmit('signupForm', 'http://localhost:5000/signup');
+    handleSubmit('loginForm', 'http://localhost:5000/login');
+    handleSubmit('resetForm', 'http://localhost:5000/reset-password');
+  </script>
+</body>
+</html>
