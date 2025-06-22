@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Honeypot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🛡️ Dashboard Honeypot</h1>
+    <p>Dernières intrusions détectées</p>
+  </header>
+
+  <main>
+    <table id="intrusion-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>IP</th>
+          <th>Méthode</th>
+          <th>URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Les lignes seront injectées en JS -->
+      </tbody>
+    </table>
+  </main>
+    <button onclick="fetchData()">Fetch Data</button>
+    <div id="dataContainer">Data will appear here...</div>
+
+    <script>
+        async function fetchData() {
+            const dataContainer = document.getElementById('dataContainer');
+            dataContainer.innerHTML = 'Loading...';
+
+            try {
+                // Replace this URL with your actual API endpoint
+                const response = await fetch('http://192.168.1.48:5000/api/logs/general/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add any required headers like Authorization if needed
+                        // 'Authorization': 'Bearer your_token_here'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Display the data - modify based on your API's response structure
+                dataContainer.innerHTML = `
+                    <h2>Data Received:</h2>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                dataContainer.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
