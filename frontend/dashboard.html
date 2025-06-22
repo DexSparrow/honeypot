@@ -1,112 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Request Logs</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Logs Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen">
   <div class="container mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-4">Request Logs</h1>
-    <div class="overflow-x-auto">
-      <table class="min-w-full bg-white border border-gray-200">
-        <thead>
-          <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-            <th class="py-3 px-6 text-left">ID</th>
-            <th class="py-3 px-6 text-left">IP</th>
-            <th class="py-3 px-6 text-left">Method</th>
-            <th class="py-3 px-6 text-left">URL</th>
-            <th class="py-3 px-6 text-left">Payload</th>
-            <th class="py-3 px-6 text-left">Detected Patterns</th>
-            <th class="py-3 px-6 text-left">Highest Severity</th>
-            <th class="py-3 px-6 text-left">User Agent</th>
-            <th class="py-3 px-6 text-left">Geo</th>
-            <th class="py-3 px-6 text-left">Date</th>
-          </tr>
-        </thead>
-        <tbody id="logsTableBody" class="text-gray-600 text-sm font-light">
-          <!-- Data will be inserted here -->
-        </tbody>
-      </table>
+
+    <!-- Tabs -->
+    <div class="flex space-x-4 mb-6">
+      <button id="requestTab" class="tab-button bg-blue-600 text-white px-4 py-2 rounded">Request Logs</button>
+      <button id="portScanTab" class="tab-button bg-gray-300 text-gray-800 px-4 py-2 rounded">Port Scan Logs</button>
     </div>
+
+    <!-- Request Logs Section -->
+    <section id="requestLogsSection">
+      <h2 class="text-2xl font-bold mb-4">Request Logs</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-200">
+          <thead>
+            <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+              <th class="py-3 px-6 text-left">ID</th>
+              <th class="py-3 px-6 text-left">IP</th>
+              <th class="py-3 px-6 text-left">Method</th>
+              <th class="py-3 px-6 text-left">URL</th>
+              <th class="py-3 px-6 text-left">Payload</th>
+              <th class="py-3 px-6 text-left">Detected Patterns</th>
+              <th class="py-3 px-6 text-left">Highest Severity</th>
+              <th class="py-3 px-6 text-left">User Agent</th>
+              <th class="py-3 px-6 text-left">Geo</th>
+              <th class="py-3 px-6 text-left">Date</th>
+            </tr>
+          </thead>
+          <tbody id="requestLogsTableBody" class="text-gray-600 text-sm font-light">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Port Scan Logs Section -->
+    <section id="portScanLogsSection" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Port Scan Logs</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-200">
+          <thead>
+            <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+              <th class="py-3 px-6 text-left">ID</th>
+              <th class="py-3 px-6 text-left">IP</th>
+              <th class="py-3 px-6 text-left">Port</th>
+              <th class="py-3 px-6 text-left">Type</th>
+              <th class="py-3 px-6 text-left">Date</th>
+            </tr>
+          </thead>
+          <tbody id="portScanTableBody" class="text-gray-600 text-sm font-light">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 
   <script>
-    // Fetch data from backend API
-    async function fetchData() {
+    const requestTab = document.getElementById('requestTab');
+    const portScanTab = document.getElementById('portScanTab');
+    const requestLogsSection = document.getElementById('requestLogsSection');
+    const portScanLogsSection = document.getElementById('portScanLogsSection');
+
+    const apiBase = 'http://localhost:5000/api/logs';
+
+    // Load data
+    async function fetchLogs(url) {
       try {
-        const response = await fetch('http://192.168.1.48:5000/api/logs/general/', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        console.error('Fetch error:', error);
-        return []; // Return empty array if there's an error
+        const response = await fetch(url);
+        return await response.json();
+      } catch (err) {
+        console.error('Fetch error:', err);
+        return [];
       }
     }
 
-    // Populate the table with fetched data
-    function populateTable(data) {
-      const tableBody = document.getElementById('logsTableBody');
-      tableBody.innerHTML = ''; // Clear existing rows
+    function populateRequestLogs(data) {
+      const table = document.getElementById('requestLogsTableBody');
+      table.innerHTML = '';
 
       data.forEach(log => {
-        const row = document.createElement('tr');
-        row.className = 'border-b border-gray-200 hover:bg-gray-100';
-
-        // Format detectedPatterns
-        const patterns = log.detectedPatterns
-          ? log.detectedPatterns.map(p => `${p.name} (${p.severity})`).join(', ')
-          : 'None';
-
-        // Format geo
+        const patterns = log.detectedPatterns?.map(p => `${p.name} (${p.severity})`).join(', ') || 'None';
         const geo = log.geo ? JSON.stringify(log.geo) : 'N/A';
+        const date = new Date(log.date).toLocaleString();
 
-        // Format date
-        const date = log.date ? new Date(log.date).toLocaleString() : 'N/A';
-
-        row.innerHTML = `
-          <td class="py-3 px-6">${log._id || 'N/A'}</td>
-          <td class="py-3 px-6">${log.ip || 'N/A'}</td>
-          <td class="py-3 px-6">${log.method || 'N/A'}</td>
-          <td class="py-3 px-6">${log.url || 'N/A'}</td>
-          <td class="py-3 px-6">${log.payload || 'N/A'}</td>
-          <td class="py-3 px-6">${patterns}</td>
-        <td class="py-3 px-6">
-          <span class="px-2 py-1 rounded-full text-white text-xs font-semibold ${
-            log.highestSeverity === 'high'
-              ? 'bg-red-500'
-              : log.highestSeverity === 'medium'
-              ? 'bg-orange-400'
-              : log.highestSeverity === 'low'
-              ? 'bg-yellow-400 text-black'
-              : 'bg-gray-300'
-          }">
-            ${log.highestSeverity || 'N/A'}
-          </span>
-        </td>
-          <td class="py-3 px-6">${log.userAgent || 'N/A'}</td>
-          <td class="py-3 px-6">${geo}</td>
-          <td class="py-3 px-6">${date}</td>
-        `;
-        tableBody.appendChild(row);
+        table.innerHTML += `
+          <tr class="border-b border-gray-200 hover:bg-gray-100">
+            <td class="py-3 px-6">${log._id || 'N/A'}</td>
+            <td class="py-3 px-6">${log.ip || 'N/A'}</td>
+            <td class="py-3 px-6">${log.method || 'N/A'}</td>
+            <td class="py-3 px-6">${log.url || 'N/A'}</td>
+            <td class="py-3 px-6">${log.payload || 'N/A'}</td>
+            <td class="py-3 px-6">${patterns}</td>
+            <td class="py-3 px-6">
+              <span class="px-2 py-1 rounded-full text-white text-xs font-semibold ${
+                log.highestSeverity === 'high'
+                  ? 'bg-red-500'
+                  : log.highestSeverity === 'medium'
+                  ? 'bg-orange-400'
+                  : log.highestSeverity === 'low'
+                  ? 'bg-yellow-400 text-black'
+                  : 'bg-gray-300'
+              }">
+                ${log.highestSeverity || 'N/A'}
+              </span>
+            </td>
+            <td class="py-3 px-6">${log.userAgent || 'N/A'}</td>
+            <td class="py-3 px-6">${geo}</td>
+            <td class="py-3 px-6">${date}</td>
+          </tr>`;
       });
     }
 
-    // Fetch and render data on page load
+    function populatePortScanLogs(data) {
+      const table = document.getElementById('portScanTableBody');
+      table.innerHTML = '';
+
+      data.forEach(scan => {
+        const date = new Date(scan.date).toLocaleString();
+        table.innerHTML += `
+          <tr class="border-b border-gray-200 hover:bg-gray-100">
+            <td class="py-3 px-6">${scan._id || 'N/A'}</td>
+            <td class="py-3 px-6">${scan.ip || 'N/A'}</td>
+            <td class="py-3 px-6">${scan.port || 'N/A'}</td>
+            <td class="py-3 px-6">${scan.type || 'N/A'}</td>
+            <td class="py-3 px-6">${date}</td>
+          </tr>`;
+      });
+    }
+
+    // Switch Tabs
+    requestTab.addEventListener('click', async () => {
+      requestTab.classList.replace('bg-gray-300', 'bg-blue-600');
+      requestTab.classList.replace('text-gray-800', 'text-white');
+      portScanTab.classList.replace('bg-blue-600', 'bg-gray-300');
+      portScanTab.classList.replace('text-white', 'text-gray-800');
+      requestLogsSection.classList.remove('hidden');
+      portScanLogsSection.classList.add('hidden');
+
+      const data = await fetchLogs(`${apiBase}/general`);
+      populateRequestLogs(data);
+    });
+
+    portScanTab.addEventListener('click', async () => {
+      portScanTab.classList.replace('bg-gray-300', 'bg-blue-600');
+      portScanTab.classList.replace('text-gray-800', 'text-white');
+      requestTab.classList.replace('bg-blue-600', 'bg-gray-300');
+      requestTab.classList.replace('text-white', 'text-gray-800');
+      portScanLogsSection.classList.remove('hidden');
+      requestLogsSection.classList.add('hidden');
+
+      const data = await fetchLogs(`${apiBase}/portscan`);
+      populatePortScanLogs(data);
+    });
+
+    // Load request logs by default
     window.addEventListener('DOMContentLoaded', async () => {
-      const logs = await fetchData();
-      populateTable(logs);
+      const data = await fetchLogs(`${apiBase}/general`);
+      populateRequestLogs(data);
     });
   </script>
 </body>
